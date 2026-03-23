@@ -28,6 +28,7 @@ class ReviewResource extends JsonResource
             'dislikes' => (int) $this->dislikes,
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
             'user' => new UserResource($this->whenLoaded('user')),
+            'product' => new ProductResource($this->whenLoaded('product')),
         ];
     }
 }

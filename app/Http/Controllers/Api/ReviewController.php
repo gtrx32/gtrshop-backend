@@ -11,24 +11,11 @@ use Illuminate\Http\Request;
 
 class ReviewController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, Product $product)
     {
-        $user = $request->user();
-
-        $reviews = $user->reviews()->with('product')->latest()->get();
+        $reviews = $product->reviews()->with('user')->latest()->get();
 
         return response()->json(ReviewResource::collection($reviews));
-    }
-
-    public function show(Review $review)
-    {
-        $user = auth()->user();
-
-        if ($review->user_id !== $user->id) {
-            return response()->json(['message' => 'Not found'], 404);
-        }
-
-        return response()->json(new ReviewResource($review));
     }
 
     public function store(ReviewRequest $request, Product $product)
@@ -50,35 +37,6 @@ class ReviewController extends Controller
         ]);
 
         return response()->json(new ReviewResource($review), 201);
-    }
-
-    public function update(ReviewRequest $request, Review $review)
-    {
-        $user = $request->user();
-
-        if ($review->user_id !== $user->id) {
-            return response()->json(['message' => 'Not found'], 404);
-        }
-
-        $data = $request->validated();
-        $data = array_filter($data, fn($value) => $value !== null && $value !== '');
-
-        $review->update($data);
-
-        return response()->json(new ReviewResource($review));
-    }
-
-    public function destroy(Review $review)
-    {
-        $user = auth()->user();
-
-        if ($review->user_id !== $user->id) {
-            return response()->json(['message' => 'Not found'], 404);
-        }
-
-        $review->delete();
-
-        return response()->json(['message' => 'Review deleted successfully']);
     }
 
     public function like(Review $review)
