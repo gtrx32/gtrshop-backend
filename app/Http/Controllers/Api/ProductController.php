@@ -10,9 +10,7 @@ class ProductController extends Controller
 {
     public function index()
     {
-        $query = Product::query()
-            ->withCount('reviews')
-            ->withAvg(['reviews as rating'], 'rating');
+        $query = Product::query();
 
         if ($name = request('name')) {
             $query->where('name', 'like', "%{$name}%");
@@ -34,12 +32,20 @@ class ProductController extends Controller
         $order = request('order', 'desc');
         $perPage = request('per_page', 10);
 
+        $priceRange = Product::query()
+            ->selectRaw('MIN(price) as min_price, MAX(price) as max_price')
+            ->first();
+
         $products = $query
             ->orderBy($sort, $order)
             ->paginate($perPage);
 
         return response()->json([
             'data' => ProductResource::collection($products),
+            'filters' => [
+                'min_price' => $priceRange?->min_price !== null ? round((float) $priceRange->min_price, 2) : null,
+                'max_price' => $priceRange?->max_price !== null ? round((float) $priceRange->max_price, 2) : null,
+            ],
             'meta' => [
                 'current_page' => $products->currentPage(),
                 'last_page' => $products->lastPage(),
@@ -47,7 +53,7 @@ class ProductController extends Controller
                 'total' => $products->total(),
                 'next_page_url' => $products->nextPageUrl(),
                 'prev_page_url' => $products->previousPageUrl(),
-            ]
+            ],
         ]);
     }
 
