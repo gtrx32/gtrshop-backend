@@ -30,14 +30,6 @@ class ProductController extends Controller
             $query->where('stock', '>', 0);
         }
 
-        if (($ratingMin = request('rating_min')) !== null) {
-            $query->having('rating', '>=', $ratingMin);
-        }
-
-        if (($ratingMax = request('rating_max')) !== null) {
-            $query->having('rating', '<=', $ratingMax);
-        }
-
         $sort = request('sort', 'id');
         $order = request('order', 'desc');
         $perPage = request('per_page', 10);
