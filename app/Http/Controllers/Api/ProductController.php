@@ -10,7 +10,9 @@ class ProductController extends Controller
 {
     public function index()
     {
-        $query = Product::query();
+        $query = Product::query()
+            ->withCount('reviews')
+            ->withAvg(['reviews as rating'], 'rating');
 
         if ($name = request('name')) {
             $query->where('name', 'like', "%{$name}%");
