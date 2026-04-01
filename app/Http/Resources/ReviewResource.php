@@ -14,10 +14,12 @@ class ReviewResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $this->loadCount([
-            'marks as likes' => fn($q) => $q->where('type', 'like'),
-            'marks as dislikes' => fn($q) => $q->where('type', 'dislike'),
-        ]);
+        if (!isset($this->likes) || !isset($this->dislikes)) {
+            $this->loadCount([
+                'marks as likes' => fn($q) => $q->where('type', 'like'),
+                'marks as dislikes' => fn($q) => $q->where('type', 'dislike'),
+            ]);
+        }
 
         return [
             'id' => (int) $this->id,

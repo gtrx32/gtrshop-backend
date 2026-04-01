@@ -10,11 +10,6 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\NewsController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/banners', [BannerController::class, 'index']);
-
-Route::get('/news', [NewsController::class, 'index']);
-Route::get('/news/{news}', [NewsController::class, 'show']);
-
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
@@ -23,14 +18,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/user', [UserController::class, 'update']);
 });
 
+Route::get('/banners', [BannerController::class, 'index']);
+
+Route::get('/news', [NewsController::class, 'index']);
+Route::get('/news/{news}', [NewsController::class, 'show']);
+
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{product}', [ProductController::class, 'show']);
-Route::get('/products/{product}/reviews', [ReviewController::class, 'index']);
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/products/{product}/reviews', [ReviewController::class, 'store']);
-});
 
+Route::get('/reviews', [ReviewController::class, 'index']);
 Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/reviews', [ReviewController::class, 'store']);
     Route::post('/reviews/{review}/like', [ReviewController::class, 'like']);
     Route::post('/reviews/{review}/dislike', [ReviewController::class, 'dislike']);
 });

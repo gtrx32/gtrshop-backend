@@ -3,25 +3,65 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\ReviewRequest;
+use App\Http\Requests\Api\ReviewIndexRequest;
+use App\Http\Requests\Api\ReviewStoreRequest;
 use App\Http\Resources\ReviewResource;
 use App\Models\Product;
 use App\Models\Review;
-use Illuminate\Http\Request;
 
 class ReviewController extends Controller
 {
-    public function index(Request $request, Product $product)
+    public function index(ReviewIndexRequest $request)
     {
-        $reviews = $product->reviews()->with('user')->latest()->get();
+        $data = $request->validated();
 
-        return response()->json(ReviewResource::collection($reviews));
+        $sort = $data['sort'] ?? 'date';
+        $order = $data['order'] ?? 'desc';
+        $perPage = $data['per_page'] ?? 10;
+
+        $query = Review::query()
+            ->with('user')
+            ->withCount([
+                'marks as likes' => fn($q) => $q->where('type', 'like'),
+                'marks as dislikes' => fn($q) => $q->where('type', 'dislike'),
+            ]);
+
+        if (isset($data['product'])) {
+            $product = Product::query()
+                ->where('slug', $data['product'])
+                ->first();
+
+            $query->where('product_id', $product->id);
+        }
+
+        if ($sort === 'rating') {
+            $query->orderBy('rating', $order);
+        } else {
+            $query->orderBy('created_at', $order);
+        }
+
+        $reviews = $query->paginate($perPage);
+
+        return response()->json([
+            'data' => ReviewResource::collection($reviews),
+            'meta' => [
+                'current_page' => $reviews->currentPage(),
+                'last_page' => $reviews->lastPage(),
+                'per_page' => $reviews->perPage(),
+                'total' => $reviews->total(),
+                'next_page_url' => $reviews->nextPageUrl(),
+                'prev_page_url' => $reviews->previousPageUrl(),
+            ],
+        ]);
     }
 
-    public function store(ReviewRequest $request, Product $product)
+    public function store(ReviewStoreRequest $request)
     {
         $user = $request->user();
         $data = $request->validated();
+        $product = Product::query()
+            ->where('slug', $data['product'])
+            ->first();
 
         if ($product->reviews()->where('user_id', $user->id)->exists()) {
             return response()->json([
@@ -35,6 +75,12 @@ class ReviewController extends Controller
             'comment' => $data['comment'],
             'rating' => $data['rating'],
         ]);
+
+        $review->load('user')
+            ->loadCount([
+                'marks as likes' => fn($q) => $q->where('type', 'like'),
+                'marks as dislikes' => fn($q) => $q->where('type', 'dislike'),
+            ]);
 
         return response()->json(new ReviewResource($review), 201);
     }
