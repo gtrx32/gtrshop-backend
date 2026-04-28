@@ -45,8 +45,10 @@ class ProductController extends Controller
         return response()->json([
             'data' => ProductResource::collection($products),
             'filters' => [
-                'min_price' => $priceRange?->min_price !== null ? round((float) $priceRange->min_price, 2) : null,
-                'max_price' => $priceRange?->max_price !== null ? round((float) $priceRange->max_price, 2) : null,
+                'price' => [
+                    'min' => $priceRange?->min_price !== null ? round((float) $priceRange->min_price, 2) : null,
+                    'max' => $priceRange?->max_price !== null ? round((float) $priceRange->max_price, 2) : null,
+                ],
             ],
             'meta' => [
                 'current_page' => $products->currentPage(),
