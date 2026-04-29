@@ -31,6 +31,9 @@ class ReviewResource extends JsonResource
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
             'user' => new UserResource($this->whenLoaded('user')),
             'product' => new ProductResource($this->whenLoaded('product')),
+            'user_mark' => $this->marks
+                ->where('user_id', auth()->id())
+                ->first()?->type,
         ];
     }
 }
