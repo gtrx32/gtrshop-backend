@@ -29,7 +29,7 @@ class ReviewController extends Controller
         if (isset($data['product'])) {
             $product = Product::query()
                 ->where('slug', $data['product'])
-                ->first();
+                ->firstOrFail();
 
             $query->where('product_id', $product->id);
         }
@@ -61,7 +61,7 @@ class ReviewController extends Controller
         $data = $request->validated();
         $product = Product::query()
             ->where('slug', $data['product'])
-            ->first();
+            ->firstOrFail();
 
         if ($product->reviews()->where('user_id', $user->id)->exists()) {
             return response()->json([
@@ -104,7 +104,7 @@ class ReviewController extends Controller
             ]);
         }
 
-        $review->loadCount([
+        $review->load('user')->loadCount([
             'marks as likes' => fn($q) => $q->where('type', 'like'),
             'marks as dislikes' => fn($q) => $q->where('type', 'dislike'),
         ]);
@@ -131,7 +131,7 @@ class ReviewController extends Controller
             ]);
         }
 
-        $review->loadCount([
+        $review->load('user')->loadCount([
             'marks as likes' => fn($q) => $q->where('type', 'like'),
             'marks as dislikes' => fn($q) => $q->where('type', 'dislike'),
         ]);

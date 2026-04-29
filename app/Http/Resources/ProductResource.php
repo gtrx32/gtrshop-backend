@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\OrderStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Storage;
@@ -26,6 +27,15 @@ class ProductResource extends JsonResource
             'reviews_count' => $this->when(isset($this->reviews_count), fn() => (int) $this->reviews_count),
             'rating' => $this->when(isset($this->rating), round($this->rating, 1)),
             'reviews' => ReviewResource::collection($this->whenLoaded('reviews')),
+            'can_review' => auth()->check()
+                ? auth()->user()
+                    ->orders()
+                    ->where('status', OrderStatus::Completed)
+                    ->whereHas('orderItems', fn ($query) => $query
+                        ->where('product_id', $this->id)
+                    )
+                    ->exists()
+                : false,
         ];
     }
 }
