@@ -16,6 +16,10 @@ class DeliveryResource extends JsonResource
     {
         return [
             'id' => (int) $this->id,
+            'recipient_name' => $this->recipient_name,
+            'phone' => $this->phone,
+            'email' => $this->email,
+            'address' => $this->address,
             'status' => $this->status,
             'tracking_code' => $this->tracking_code,
             'shipped_at' => $this->shipped_at ? $this->shipped_at->format('Y-m-d H:i:s') : null,

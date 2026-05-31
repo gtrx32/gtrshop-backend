@@ -146,7 +146,18 @@ class OrderCrudController extends CrudController
                 if (!$entry->delivery) {
                     return '—';
                 }
-                return $entry->delivery->status?->label() ?? '—';
+
+                $delivery = $entry->delivery;
+
+                return '
+                    <div>
+                        <div><b>Статус:</b> '.($delivery->status?->label() ?? '—').'</div>
+                        <div><b>Получатель:</b> '.e($delivery->recipient_name ?? '—').'</div>
+                        <div><b>Телефон:</b> '.e($delivery->phone ?? '—').'</div>
+                        <div><b>Email:</b> '.e($delivery->email ?? '—').'</div>
+                        <div><b>Адрес:</b> '.e($delivery->address ?? '—').'</div>
+                    </div>
+                ';
             },
             'escaped' => false,
         ]);
@@ -209,6 +220,18 @@ class OrderCrudController extends CrudController
             'value' => function($entry) {
                 return $entry->status?->label() ?? '—';
             },
+        ]);
+
+        CRUD::addColumn([
+            'name' => 'delivery.recipient_name',
+            'type' => 'text',
+            'label' => 'Получатель',
+        ]);
+
+        CRUD::addColumn([
+            'name' => 'delivery.phone',
+            'type' => 'text',
+            'label' => 'Телефон',
         ]);
 
         CRUD::addColumn([

@@ -18,6 +18,10 @@ class DeliveryFactory extends Factory
     public function definition(): array
     {
         return [
+            'recipient_name' => fake()->name(),
+            'phone' => fake()->phoneNumber(),
+            'email' => fake()->safeEmail(),
+            'address' => fake()->address(),
             'status' => DeliveryStatus::Pending,
             'tracking_code' => null,
             'shipped_at' => null,

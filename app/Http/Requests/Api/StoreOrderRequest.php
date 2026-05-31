@@ -22,10 +22,17 @@ class StoreOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|integer|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
-            'comment' => 'nullable|string',
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
+
+            'delivery' => ['required', 'array'],
+            'delivery.recipient_name' => ['required', 'string', 'max:255'],
+            'delivery.phone' => ['required', 'string', 'max:50'],
+            'delivery.email' => ['required', 'email', 'max:255'],
+            'delivery.address' => ['required', 'string', 'max:1000'],
+
+            'comment' => ['nullable', 'string', 'max:1000'],
         ];
     }
 }

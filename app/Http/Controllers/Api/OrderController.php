@@ -11,6 +11,7 @@ use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -42,53 +43,67 @@ class OrderController extends Controller
         $data = $request->validated();
         $user = $request->user();
 
-        $order = $user->orders()->create([
-            'total_price' => 0,
-            'total_quantity' => 0,
-            'status' => OrderStatus::Pending,
-            'comment' => $data['comment'] ?? null,
-        ]);
-
-        $totalPrice = 0;
-        $totalQuantity = 0;
-
-        $items = collect($data['items'])
-            ->groupBy('product_id')
-            ->map(fn($group) => [
-                'product_id' => $group[0]['product_id'],
-                'quantity' => array_sum(array_column($group->toArray(), 'quantity')),
-            ])
-            ->values();
-
-        $productIds = $items->pluck('product_id')->all();
-        $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
-
-        foreach ($items as $item) {
-            $product = $products[$item['product_id']];
-
-            $order->orderItems()->create([
-                'product_id' => $product->id,
-                'quantity' => $item['quantity'],
-                'price' => $product->price,
+        $order = DB::transaction(function () use ($data, $user) {
+            $order = $user->orders()->create([
+                'total_price' => 0,
+                'total_quantity' => 0,
+                'status' => OrderStatus::Pending,
+                'comment' => $data['comment'] ?? null,
             ]);
 
-            $totalPrice += $product->price * $item['quantity'];
-            $totalQuantity += $item['quantity'];
-        }
+            $totalPrice = 0;
+            $totalQuantity = 0;
 
-        $order->update([
-            'total_price' => $totalPrice,
-            'total_quantity' => $totalQuantity,
-        ]);
+            $items = collect($data['items'])
+                ->groupBy('product_id')
+                ->map(fn($group) => [
+                    'product_id' => $group[0]['product_id'],
+                    'quantity' => array_sum(array_column($group->toArray(), 'quantity')),
+                ])
+                ->values();
 
-        $order->payment()->create([
-            'amount' => $totalPrice,
-            'status' => PaymentStatus::Pending,
-        ]);
+            $productIds = $items->pluck('product_id')->all();
+            $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
 
-        $order->delivery()->create([
-            'status' => DeliveryStatus::Pending,
-        ]);
+            foreach ($items as $item) {
+                $product = $products[$item['product_id']];
+
+                if ($item['quantity'] > $product->stock) {
+                    abort(422, "Товара '{$product->name}' не хватает на складе");
+                }
+
+                $order->orderItems()->create([
+                    'product_id' => $product->id,
+                    'quantity' => $item['quantity'],
+                    'price' => $product->price,
+                ]);
+
+                $totalPrice += $product->price * $item['quantity'];
+                $totalQuantity += $item['quantity'];
+            }
+
+            $order->update([
+                'total_price' => $totalPrice,
+                'total_quantity' => $totalQuantity,
+            ]);
+
+            $order->payment()->create([
+                'amount' => $totalPrice,
+                'status' => PaymentStatus::Pending,
+            ]);
+
+            $order->delivery()->create([
+                'recipient_name' => $data['delivery']['recipient_name'],
+                'phone' => $data['delivery']['phone'],
+                'email' => $data['delivery']['email'],
+                'address' => $data['delivery']['address'],
+                'status' => DeliveryStatus::Pending,
+            ]);
+
+            $user->cart()->first()?->clear();
+
+            return $order;
+        });
 
         $order->load(['orderItems.product', 'payment', 'delivery']);
 

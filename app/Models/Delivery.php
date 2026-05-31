@@ -14,6 +14,10 @@ class Delivery extends Model
 
     protected $fillable = [
         'order_id',
+        'recipient_name',
+        'phone',
+        'email',
+        'address',
         'status',
         'tracking_code',
         'shipped_at',

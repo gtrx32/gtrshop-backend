@@ -46,7 +46,13 @@ class OrderSeeder extends Seeder
             ]);
 
             $order->payment()->create(['amount' => $totalPrice]);
-            $order->delivery()->create([]);
+
+            $order->delivery()->create([
+                'recipient_name' => fake()->name(),
+                'phone' => fake()->phoneNumber(),
+                'email' => fake()->safeEmail(),
+                'address' => fake()->address(),
+            ]);
         }
     }
 }
